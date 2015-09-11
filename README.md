@@ -16,7 +16,7 @@ php composer.phar require --prefer-dist yiier/yii2-request-behavior "*"
 or add
 
 ```
-"yiier/yii2-request-behavior": "*"
+"yiier/yii2-request-behavior": "dev-master"
 ```
 
 to the require section of your `composer.json` file.
@@ -34,7 +34,7 @@ public function behaviors()
         // code ...
         [
             'class' => ThrottleBehavior::className(),
-            'message'=>'您操作太频繁了，60秒内不能重复操作。'
+            'message'=>'您操作太频繁了，10秒内不能重复操作。'
         ],
     ];
 }
