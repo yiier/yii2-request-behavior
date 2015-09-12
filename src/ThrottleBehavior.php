@@ -8,10 +8,12 @@
 
 namespace yiier\request;
 
+use Yii;
 use yii\base\Behavior;
 use yii\base\Event;
+use yii\base\InvalidConfigException;
+use yii\caching\Cache;
 use yii\db\ActiveRecord;
-use Yii;
 use yii\web\Controller;
 
 class ThrottleBehavior extends Behavior
@@ -24,6 +26,24 @@ class ThrottleBehavior extends Behavior
      * @var int 持续时间 单位秒
      */
     public $duration = 10;
+    /**
+     * @var Cache|string the cache object or the application component id of the cache object
+     */
+    public $cache = 'cache';
+
+    /**
+     * @inhertidoc
+     */
+    public function init()
+    {
+        if (is_string($this->cache)) {
+            //if the cache component is not defined, will throw the exception
+            $this->cache = Yii::$app->get($this->cache);
+        }
+        if (!($this->cache instanceof Cache)) {
+            throw new InvalidConfigException('You must set the cache component!');
+        }
+    }
 
     /**
      * 事件
@@ -39,12 +59,11 @@ class ThrottleBehavior extends Behavior
     public function checkRepeatSubmit($event)
     {
 //        $post = \Yii::$app->request->bodyParams;
-//        unset($post['_csrf']);
-//        $key = md5(json_encode($post));
+        //        unset($post['_csrf']);
+        //        $key = md5(json_encode($post));
         $key = Yii::$app->controller->action->uniqueId;
 
-        $cache = Yii::$app->cache;
-        if ($cache->get($key) === false) {
+        if ($this->cache->get($key) === false) {
             // 没有数据  证明是初次进入 或者缓存失效
         } else {
             // 缓存还没失效
@@ -58,7 +77,7 @@ class ThrottleBehavior extends Behavior
         Event::on(ActiveRecord::className(), ActiveRecord::EVENT_AFTER_INSERT, function (Event $event) use ($key) {
             // 这里证明AR已经插入了
             // 此处可以写入缓存
-            Yii::$app->cache->set($key, time(), $this->duration);
+            $this->cache->set($key, time(), $this->duration);
         });
     }
 
